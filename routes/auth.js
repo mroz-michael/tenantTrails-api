@@ -72,6 +72,14 @@ router.post("/logout", (req, res) => {
     res.json({ ok: true });
 });
 
+//for checking to see if user is logged in
+router.get("/me", auth, async (req, res) => {
+    const [[user]] = await pool.query(
+        "SELECT id, name AS fullName, email, initials FROM users WHERE id = ?",
+        [req.user.id]
+    );
+    res.json({ user });
+});
 
 
 export default router; 
