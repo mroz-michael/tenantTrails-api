@@ -9,9 +9,14 @@ router.get('/', async (req, res) => {
     try {
 
         const queryString = `
-            SELECT a.*,
-            ROUND(AVG(r.rating), 1) AS rating,
-            COUNT(r.id) AS reviews
+            SELECT a.id,
+                   a.name,
+                   a.address,
+                   a.neighbourhood,
+                   a.description,
+                   a.image,
+                   ROUND(AVG(r.rating), 1) AS averageRating,
+                   COUNT(r.id)             AS numReviews
             FROM apartments a
             LEFT JOIN reviews r ON r.apt_id = a.id
             GROUP BY a.id
@@ -28,20 +33,40 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
     try {
         const aId = req.params.id;
-        const [[apartment]] = await pool.query(
-            "SELECT * FROM apartments WHERE id = ?",
-            [aId]
-        );
+        
+        const [[apartment]] = await pool.query(`
+            SELECT a.id,
+                   a.name,
+                   a.address,
+                   a.neighbourhood,
+                   a.description,
+                   a.image,
+                   ROUND(AVG(r.rating), 1) AS averageRating,
+                   COUNT(r.id)             AS numReviews
+            FROM apartments a
+            LEFT JOIN reviews r ON r.apt_id = a.id
+            WHERE a.id = ?
+            GROUP BY a.id
+        `, [aId]);
 
         if (!apartment) {
             return res.status(404).json({error: "Apartment not found"});
         }
 
         const queryString = `
-            SELECT r.*, u.name as author 
-            FROM reviews r LEFT JOIN users u ON r.user_id = u.id
+            SELECT 
+                r.id,
+                r.rating,
+                r.body,
+                r.created  AS date,
+                r.apt_id   AS apartmentId,
+                r.user_id  AS userId,
+                u.name     AS author
+            FROM reviews r
+            LEFT JOIN users u ON r.user_id = u.id
             WHERE r.apt_id = ?
-        `
+        `;
+
         const [reviews] = await pool.query(queryString, [aId]);
 
         res.json({
@@ -70,7 +95,7 @@ router.post('/:id/reviews', auth, async (req, res) => {
     res.status(201).json({
       id: result.insertId,
       apt_id: aptId,
-      user_id: userId,
+      userId,
       rating,
       body
     });
@@ -104,8 +129,8 @@ router.post('/reviews/:rId/comments', auth, async (req, res) => {
 
         res.status(201).json({
             id: result.insertId,
-            review_id: rId,
-            user_id: userId,
+            reviewId: rId,
+            userId: userId,
             content
         })
     } catch (err) {

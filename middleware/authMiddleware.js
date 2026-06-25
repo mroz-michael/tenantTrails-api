@@ -1,12 +1,11 @@
 import jwt from "jsonwebtoken";
+import "dotenv/config";
 
 export function auth(req, res, next) {
-    const header = req.headers.authorization;
-    const token = header ? header.split(" ")[1] : false;
-
+    const token = req.cookies.token;
 
     if (!token) {
-        return res.status(401).json({error: "No token"});
+        return res.sendStatus(401);
     }
 
     try {
