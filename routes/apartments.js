@@ -92,13 +92,21 @@ router.post('/:id/reviews', auth, async (req, res) => {
       [aptId, userId, rating, body]
     );
 
-    res.status(201).json({
-      id: result.insertId,
-      apt_id: aptId,
-      userId,
-      rating,
-      body
-    });
+    const [[newReview]] = await pool.query(
+        `SELECT r.id,
+                r.rating,
+                r.body,
+                r.created  AS date,
+                r.apt_id   AS apartmentId,
+                r.user_id  AS userId,
+                u.name     AS author
+            FROM reviews r
+            LEFT JOIN users u ON r.user_id = u.id
+            WHERE r.id = ?`,
+        [result.insertId]
+    );
+
+    res.status(201).json(newReview);
 
   } catch (err) {
     console.error(err);

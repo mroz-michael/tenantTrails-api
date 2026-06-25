@@ -2,6 +2,7 @@ import express from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import {pool} from '../connections/db.js';
+import {auth} from '../middleware/authMiddleware.js';
 import 'dotenv/config';
 
 const router = express.Router();
