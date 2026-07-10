@@ -25,7 +25,8 @@ router.post("/signup", async (req, res) => {
 
         res.cookie("token", signToken(user.id), {
             httpOnly: true,
-            sameSite: "lax",
+            sameSite: "none",
+            secure: true,
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
 
